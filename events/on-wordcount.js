@@ -1,12 +1,11 @@
 const mongoose = require("mongoose"); //database library
 const Users = require("./../database/models/users.js"); // users model
-const Messages = require("./../database/models/messages.js"); // messages model
 
 module.exports = {
   name: "onWordcount",
   async event(message) {
 
-    if (!message || !message.content || !message.author || !message.author.id || message.content == "" || message.author.bot)) {
+    if (!message || !message.content || !message.author || !message.author.id || message.content == "" || message.author.bot) {
       return;
     }
 
