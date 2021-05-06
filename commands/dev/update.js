@@ -1,4 +1,5 @@
 const fs = require('fs');
+const Listeners = require("./database/models/listeners.js"); // listeners model
 
 module.exports = {
     name: 'update', // The name of the command
@@ -70,6 +71,24 @@ module.exports = {
       const assetJsons = fs.readdirSync('./assets',{ withFileTypes: true }).filter((f)=>f.name.endsWith('.json'));
       assetJsons.forEach((assetJ) => {
         delete require.cache[require.resolve('./../../assets/'+assetJ.name)];
+      });
+
+      const oldListeners = [...client.listeners.keys()];
+      for (const lis of oldListeners) {
+        client.listeners.delete(lis);
+      }
+      
+      Listeners.find({},function(err,arr) {
+        if (err) {
+          return console.error(err);
+        }
+        if (!arr || arr.length == 0) {
+          return console.log("No message listeners found.");
+        }
+        for (const lis of arr) {
+          client.listeners.set(lis._id,lis.channelID);
+        }
+        console.log(`${arr.length} fetched listener data.`);
       });
 
       message.reply('Done! Outside of the database and index.js, the bot should be fully updated! May require an additional update for the update command to be affected.');

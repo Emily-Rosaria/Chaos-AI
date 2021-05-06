@@ -18,6 +18,8 @@ const mongoose = require("mongoose"); //database library
 const connectDB = require("./database/connectDB.js"); // Database connection
 const database = config.dbName; // Database name
 
+const Listeners = require("./database/models/listeners.js"); // listeners model
+
 const client = new Discord.Client({ws: { intents: ['GUILDS', 'GUILD_MEMBERS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILD_MESSAGE_TYPING', 'DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'DIRECT_MESSAGE_TYPING']}, partials: ['MESSAGE', 'CHANNEL', 'REACTION']}); // Initiates the client
 
 client.commands = new Discord.Collection(); // Creates an empty list in the client object to store all commands
@@ -55,45 +57,59 @@ for (const file of eventFiles) {
 }
 
 // Starts the bot and makes it begin listening for commands.
-client.on('ready', async function() {
-    client.user.setPresence({ status: 'online' }); // activity: { type: 'PLAYING', name: 'with anti-fash' }
+client.on('ready', function() {
+    client.user.setPresence({ status: 'online' }); // activity: { type: 'PLAYING', name: 'with Chaos' }
     console.log(`${client.user.username} is up and running! Launched at: ${(new Date()).toUTCString()}.`);
+    client.listeners = new Discord.Collection();
+    Listeners.find({},function(err,arr) {
+      if (err) {
+        return console.error(err);
+      }
+      if (!arr || arr.length == 0) {
+        return console.log("No message listeners found.");
+      }
+      for (const lis of arr) {
+        client.listeners.set(lis._id,lis.channelID);
+      }
+      console.log(`${arr.length} fetched listener data.`);
+    });
 });
 
-client.on('message', async message => {
+client.on('message', message => {
     if (!message || !message.author || message.author.bot) {
       return; // don't respond to bots
     }
     client.events.get("onMessage").event(message);
 });
 
-client.on('messageDelete', async message => {
+client.on('messageDelete', message => {
     if (!message.author || message.author.bot) {return} // don't respond to bots
     client.events.get("onDelete").event(message);
 });
 
-client.on('messageUpdate', async (oldMessage, newMessage) => {
+client.on('messageUpdate', (oldMessage, newMessage) => {
     if (!newMessage.author || newMessage.author.bot) {return} // don't respond to bots
     client.events.get("onEdit").event(oldMessage, newMessage);
 });
 
-client.on('messageReactionAdd', async (reaction, user) => {
+client.on('messageReactionAdd', (reaction, user) => {
     if (!user || user.bot) {return}
     client.events.get("onReactionAdd").event(reaction, user);
 });
 
-client.on('messageReactionRemove', async (reaction, user) => {
+client.on('messageReactionRemove', (reaction, user) => {
     if (!user || user.bot) {return}
     client.events.get("onReactionRemove").event(reaction, user);
 });
 
-client.on('messageReactionRemoveEmoji', async (reaction) => {
+client.on('messageReactionRemoveEmoji', (reaction) => {
     client.events.get("onReactionTake").event(reaction); // when all reactions for a specific emoji are removed from a message (by a bot)
 });
 
-client.on('messageReactionRemoveAll', async (message) => {
+client.on('messageReactionRemoveAll', (message) => {
     client.events.get("onReactionClear").event(message);
 });
 
 connectDB("mongodb://localhost:27017/"+database);
+
 client.login(process.env.TOKEN); // Log the bot in using the token provided in the .env file

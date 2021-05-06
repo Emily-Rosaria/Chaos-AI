@@ -19,6 +19,11 @@
     "7":2,
     "21":3
   },
+  "xp":{
+    "min":10,
+    "max":25,
+    "cooldown":300
+  },
   "dbName":"chaos",
   "github":"https://github.com/Emily-Rosaria/Chaos-AI"
 }
